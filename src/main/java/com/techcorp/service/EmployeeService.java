@@ -1,5 +1,6 @@
 package com.techcorp.service;
 
+import com.techcorp.model.CompanyStatistics;
 import com.techcorp.model.Employee;
 import com.techcorp.model.Position;
 import com.techcorp.exception.DuplicateEmailException;
@@ -57,6 +58,52 @@ public class EmployeeService {
 
     public int size() {
         return employees.size();
+    }
+
+    /**
+     * Zwraca listę pracowników z wynagrodzeniem niższym niż bazowa stawka ich stanowiska.
+     * Używa Stream API do filtrowania pracowników.
+     * 
+     * @return lista pracowników z niewystarczającym wynagrodzeniem
+     */
+    public List<Employee> validateSalaryConsistency() {
+        return stream()
+                .filter(employee -> employee.getSalary() < employee.getPosition().getBaseSalary())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Zwraca mapę statystyk dla każdej firmy.
+     * Dla każdej firmy oblicza:
+     * - liczbę pracowników
+     * - średnie wynagrodzenie
+     * - pełne imię i nazwisko osoby z najwyższym wynagrodzeniem
+     * 
+     * @return mapa, gdzie kluczem jest nazwa firmy, a wartością obiekt CompanyStatistics
+     */
+    public Map<String, CompanyStatistics> getCompanyStatistics() {
+        return stream()
+                .collect(Collectors.groupingBy(
+                    Employee::getCompanyName,
+                    Collectors.collectingAndThen(
+                        Collectors.toList(),
+                        employeesList -> {
+                            long count = employeesList.size();
+                            
+                            double avgSalary = employeesList.stream()
+                                    .mapToDouble(Employee::getSalary)
+                                    .average()
+                                    .orElse(0.0);
+                            
+                            String highestPaid = employeesList.stream()
+                                    .max(Comparator.comparingDouble(Employee::getSalary))
+                                    .map(Employee::getFullName)
+                                    .orElse("");
+                            
+                            return new CompanyStatistics(count, avgSalary, highestPaid);
+                        }
+                    )
+                ));
     }
 
     private Stream<Employee> stream() {

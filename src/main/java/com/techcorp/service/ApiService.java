@@ -1,13 +1,98 @@
 package com.techcorp.service;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import com.techcorp.model.Employee;
+import com.techcorp.model.Position;
 import com.techcorp.exception.ApiException;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ApiService {
+    private final HttpClient httpClient;
+    private final Gson gson;
+    
+    public ApiService() {
+        this.httpClient = HttpClient.newHttpClient();
+        this.gson = new Gson();
+    }
     
     public List<Employee> fetchEmployeesFromApi(String apiUrl) throws ApiException {
-        // TODO: Implement REST API integration
-        return null;
+        try {
+            // Wykonanie zapytania GET do API
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(apiUrl))
+                    .GET()
+                    .header("Accept", "application/json")
+                    .build();
+            
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            // Sprawdzenie statusu HTTP
+            if (response.statusCode() != 200) {
+                throw new ApiException("Błąd HTTP: " + response.statusCode() + " - " + response.body());
+            }
+            
+            // Parsowanie odpowiedzi JSON
+            return parseJsonResponse(response.body());
+            
+        } catch (IOException e) {
+            throw new ApiException("Błąd podczas komunikacji z API: " + e.getMessage(), e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ApiException("Przerwano połączenie z API: " + e.getMessage(), e);
+        } catch (JsonSyntaxException e) {
+            throw new ApiException("Błąd parsowania JSON: " + e.getMessage(), e);
+        }
+    }
+    
+    private List<Employee> parseJsonResponse(String jsonResponse) throws ApiException {
+        List<Employee> employees = new ArrayList<>();
+        
+        try {
+            JsonArray jsonArray = gson.fromJson(jsonResponse, JsonArray.class);
+            
+            for (JsonElement element : jsonArray) {
+                JsonObject userObject = element.getAsJsonObject();
+                
+                // Pobieranie pola name
+                String fullName = userObject.get("name").getAsString();
+                
+                // Rozdzielenie name na firstName i lastName
+                String[] nameParts = fullName.trim().split("\\s+", 2);
+                String firstName = nameParts[0];
+                String lastName = nameParts.length > 1 ? nameParts[1] : "";
+                String employeeFullName = firstName + (lastName.isEmpty() ? "" : " " + lastName);
+                
+                // Pobieranie pola email
+                String email = userObject.get("email").getAsString();
+                
+                // Pobieranie pola company.name
+                JsonObject companyObject = userObject.get("company").getAsJsonObject();
+                String companyName = companyObject.get("name").getAsString();
+                
+                // Przypisanie stanowiska PROGRAMISTA i bazowej stawki
+                Position position = Position.PROGRAMISTA;
+                double salary = position.getBaseSalary();
+                
+                // Utworzenie obiektu Employee
+                Employee employee = new Employee(employeeFullName, email, companyName, position, salary);
+                employees.add(employee);
+            }
+            
+        } catch (Exception e) {
+            throw new ApiException("Błąd podczas parsowania danych użytkownika: " + e.getMessage(), e);
+        }
+        
+        return employees;
     }
 }

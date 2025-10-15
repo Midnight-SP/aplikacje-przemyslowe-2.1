@@ -22,6 +22,7 @@ repositories {
 }
 
 dependencies {
+    implementation 'com.google.code.gson:gson:2.10.1'
     testImplementation platform('org.junit:junit-bom:5.10.2')
     testImplementation 'org.junit.jupiter:junit-jupiter'
 }
@@ -32,4 +33,12 @@ tasks.withType(JavaCompile).configureEach {
 
 test {
     useJUnitPlatform()
+}
+
+// Dodatkowe zadanie do uruchamiania demo analitycznego
+tasks.register('runAnalyticsDemo', JavaExec) {
+    group = 'application'
+    description = 'Uruchamia demo metod analitycznych'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.techcorp.AnalyticsDemo'
 }
