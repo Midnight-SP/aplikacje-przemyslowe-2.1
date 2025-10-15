@@ -1,10 +1,15 @@
 plugins {
     id 'java'
+    id 'application'
 }
 
 group = 'com.techcorp'
 version = '1.0.0-SNAPSHOT'
 description = 'Prosty system zarządzania pracownikami dla TechCorp'
+
+application {
+    mainClass = 'com.techcorp.Main'
+}
 
 java {
     toolchain {
