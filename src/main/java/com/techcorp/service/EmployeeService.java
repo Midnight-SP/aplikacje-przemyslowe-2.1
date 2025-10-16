@@ -9,7 +9,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-// Serwis zarządzający pracownikami w organizacji.
 public class EmployeeService {
     private final Map<String, Employee> employees = new LinkedHashMap<>();
 

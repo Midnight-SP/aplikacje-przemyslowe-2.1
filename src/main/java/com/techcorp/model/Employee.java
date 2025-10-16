@@ -2,7 +2,6 @@ package com.techcorp.model;
 
 import java.util.Objects;
 
-// Reprezentuje pracownika w organizacji.
 public class Employee {
     private String fullName;
     private String email;

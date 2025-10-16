@@ -15,16 +15,13 @@ public class Main {
     public static void main(String[] args) {
         System.out.println("=== TechCorp Employee Management System ===\n");
         
-        // Inicjalizacja serwisów
         EmployeeService employeeService = new EmployeeService();
         ImportService importService = new ImportService(employeeService);
         ApiService apiService = new ApiService();
         
-        // 1. Import z pliku CSV
         System.out.println("1. Importowanie pracowników z pliku CSV...");
         ImportSummary summary = importService.importFromCsv("test-data.csv");
         
-        // Wyświetlenie wyników importu
         System.out.println("\n=== Wyniki importu CSV ===");
         System.out.println("Zaimportowano pracowników: " + summary.getImportedCount());
         System.out.println("Liczba błędów: " + summary.getErrors().size());
@@ -36,7 +33,6 @@ public class Main {
             }
         }
         
-        // 2. Pobieranie pracowników z REST API
         System.out.println("\n2. Pobieranie pracowników z REST API...");
         try {
             List<Employee> apiEmployees = apiService.fetchEmployeesFromApi(
@@ -45,7 +41,6 @@ public class Main {
             
             System.out.println("Pobrano " + apiEmployees.size() + " pracowników z API");
             
-            // Dodawanie pracowników z API do serwisu
             int addedCount = 0;
             for (Employee employee : apiEmployees) {
                 try {
@@ -57,7 +52,6 @@ public class Main {
             }
             System.out.println("Dodano " + addedCount + " pracowników z API do systemu");
             
-            // Wyświetlenie przykładowych pracowników z API
             System.out.println("\nPrzykładowi pracownicy z API:");
             apiEmployees.stream().limit(3).forEach(emp -> 
                 System.out.println("  - " + emp.getFullName() + " (" + emp.getEmail() + ") - " 
@@ -68,7 +62,6 @@ public class Main {
             System.err.println("Błąd podczas pobierania danych z API: " + e.getMessage());
         }
         
-        // 3. Walidacja spójności wynagrodzeń
         System.out.println("\n=== 3. Walidacja spójności wynagrodzeń ===");
         List<Employee> underpaidEmployees = employeeService.validateSalaryConsistency();
         
@@ -86,7 +79,6 @@ public class Main {
             }
         }
         
-        // 4. Statystyki dla firm
         System.out.println("\n=== 4. Statystyki dla firm ===");
         Map<String, com.techcorp.model.CompanyStatistics> companyStats = 
             employeeService.getCompanyStatistics();
@@ -98,7 +90,6 @@ public class Main {
             System.out.println("  - Najlepiej opłacany: " + stats.getHighestPaidEmployee());
         });
         
-        // 5. Podsumowanie
         System.out.println("\n=== 5. Podsumowanie ===");
         System.out.println("Łączna liczba pracowników w systemie: " + employeeService.size());
         

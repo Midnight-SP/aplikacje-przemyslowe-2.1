@@ -1,6 +1,5 @@
 package com.techcorp.model;
 
-// Reprezentuje stanowiska w firmie wraz z bazowymi wynagrodzeniami i poziomami hierarchii.
 public enum Position {
     PREZES(25_000, 1),
     WICEPREZES(18_000, 2),

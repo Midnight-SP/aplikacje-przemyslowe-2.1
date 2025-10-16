@@ -25,14 +25,12 @@ public class ImportService {
         try (BufferedReader reader = new BufferedReader(new FileReader(filepath))) {
             String line;
             
-            // Pomijamy nagłówek (pierwsza linia)
             reader.readLine();
             lineNumber++;
             
             while ((line = reader.readLine()) != null) {
                 lineNumber++;
                 
-                // Pomijamy puste linie
                 if (line.trim().isEmpty()) {
                     continue;
                 }
@@ -66,7 +64,6 @@ public class ImportService {
         String positionStr = fields[4].trim();
         String salaryStr = fields[5].trim();
         
-        // Walidacja stanowiska
         Position position;
         try {
             position = Position.valueOf(positionStr.toUpperCase());
@@ -74,7 +71,6 @@ public class ImportService {
             throw new IllegalArgumentException("Nieprawidłowe stanowisko: " + positionStr);
         }
         
-        // Walidacja wynagrodzenia
         double salary;
         try {
             salary = Double.parseDouble(salaryStr);

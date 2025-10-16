@@ -45,7 +45,6 @@ class IntegrationTest {
      */
     @Test
     void testCompleteCSVImportWithValidationAndStatistics() throws IOException {
-        // Given - przygotowanie pliku CSV
         Path csvFile = tempDir.resolve("test-employees.csv");
         String csvContent = """
                 firstName,lastName,email,company,position,salary
@@ -56,25 +55,19 @@ class IntegrationTest {
                 """;
         Files.writeString(csvFile, csvContent);
         
-        // When - import z CSV
         ImportSummary summary = importService.importFromCsv(csvFile.toString());
         
-        // Then - weryfikacja importu
         assertEquals(4, summary.getImportedCount(), "Powinno zaimportować 4 pracowników");
         assertTrue(summary.getErrors().isEmpty(), "Nie powinno być błędów");
         assertEquals(4, employeeService.size(), "EmployeeService powinien mieć 4 pracowników");
         
-        // When - walidacja wynagrodzeń
         List<Employee> underpaidEmployees = employeeService.validateSalaryConsistency();
         
-        // Then - jeden pracownik ma za niskie wynagrodzenie
         assertEquals(1, underpaidEmployees.size(), "Jeden pracownik ma wynagrodzenie poniżej bazowej stawki");
         assertEquals("piotr@datasoft.com", underpaidEmployees.get(0).getEmail().toLowerCase());
         
-        // When - generowanie statystyk
         Map<String, CompanyStatistics> stats = employeeService.getCompanyStatistics();
         
-        // Then - statystyki dla dwóch firm
         assertEquals(2, stats.size(), "Powinny być statystyki dla 2 firm");
         
         CompanyStatistics techCorpStats = stats.get("TechCorp");
@@ -96,7 +89,6 @@ class IntegrationTest {
      */
     @Test
     void testCSVImportWithErrors() throws IOException {
-        // Given - plik CSV z błędami
         Path csvFile = tempDir.resolve("test-errors.csv");
         String csvContent = """
                 firstName,lastName,email,company,position,salary
@@ -109,14 +101,11 @@ class IntegrationTest {
                 """;
         Files.writeString(csvFile, csvContent);
         
-        // When
         ImportSummary summary = importService.importFromCsv(csvFile.toString());
         
-        // Then - weryfikacja
         assertEquals(2, summary.getImportedCount(), "Powinno zaimportować 2 poprawnych pracowników");
         assertEquals(3, summary.getErrors().size(), "Powinno być 3 błędy");
         
-        // Sprawdzenie czy błędy zawierają odpowiednie informacje
         assertTrue(summary.getErrors().stream().anyMatch(e -> e.contains("INVALID_POSITION")));
         assertTrue(summary.getErrors().stream().anyMatch(e -> e.contains("dodatnie")));
         assertTrue(summary.getErrors().stream().anyMatch(e -> e.contains("format")));
@@ -128,16 +117,12 @@ class IntegrationTest {
      */
     @Test
     void testAPIIntegrationWithEmployeeService() throws ApiException {
-        // Given
         String apiUrl = "https://jsonplaceholder.typicode.com/users";
         
-        // When - pobieranie z API
         List<Employee> apiEmployees = apiService.fetchEmployeesFromApi(apiUrl);
         
-        // Then - weryfikacja pobranych danych
         assertEquals(10, apiEmployees.size(), "API powinno zwrócić 10 użytkowników");
         
-        // Sprawdzenie pierwszego użytkownika
         Employee firstEmployee = apiEmployees.get(0);
         assertNotNull(firstEmployee.getFullName());
         assertNotNull(firstEmployee.getEmail());
@@ -145,25 +130,20 @@ class IntegrationTest {
         assertEquals("PROGRAMISTA", firstEmployee.getPosition().name());
         assertEquals(8000.0, firstEmployee.getSalary(), 0.01);
         
-        // When - dodanie do systemu
         int addedCount = 0;
         for (Employee emp : apiEmployees) {
             try {
                 employeeService.addEmployee(emp);
                 addedCount++;
             } catch (Exception e) {
-                // ignorujemy duplikaty
             }
         }
         
-        // Then - wszyscy powinni być dodani
         assertEquals(10, addedCount, "Wszyscy 10 pracowników powinno być dodanych");
         assertEquals(10, employeeService.size());
         
-        // When - sprawdzenie statystyk
         List<Employee> underpaid = employeeService.validateSalaryConsistency();
         
-        // Then - wszyscy z API mają bazową stawkę, więc nikt nie jest underpaid
         assertTrue(underpaid.isEmpty(), "Pracownicy z API mają bazowe wynagrodzenie");
     }
     
@@ -173,7 +153,6 @@ class IntegrationTest {
      */
     @Test
     void testCompleteWorkflow() throws IOException, ApiException {
-        // Krok 1: Import z CSV
         Path csvFile = tempDir.resolve("initial-data.csv");
         String csvContent = """
                 firstName,lastName,email,company,position,salary
@@ -185,7 +164,6 @@ class IntegrationTest {
         ImportSummary csvSummary = importService.importFromCsv(csvFile.toString());
         assertEquals(2, csvSummary.getImportedCount());
         
-        // Krok 2: Dodanie pracowników z API
         List<Employee> apiEmployees = apiService.fetchEmployeesFromApi(
             "https://jsonplaceholder.typicode.com/users"
         );
@@ -196,30 +174,24 @@ class IntegrationTest {
                 employeeService.addEmployee(emp);
                 apiAddedCount++;
             } catch (Exception e) {
-                // ignorujemy błędy
             }
         }
         
-        // Krok 3: Weryfikacja łącznej liczby
         int totalExpected = csvSummary.getImportedCount() + apiAddedCount;
         assertEquals(totalExpected, employeeService.size());
         assertTrue(employeeService.size() >= 12, "Powinno być co najmniej 12 pracowników");
         
-        // Krok 4: Analiza - walidacja wynagrodzeń
         List<Employee> underpaid = employeeService.validateSalaryConsistency();
         assertNotNull(underpaid);
         
-        // Krok 5: Analiza - statystyki firm
         Map<String, CompanyStatistics> stats = employeeService.getCompanyStatistics();
         assertNotNull(stats);
         assertFalse(stats.isEmpty());
         assertTrue(stats.size() >= 2, "Powinno być co najmniej 2 firmy");
         
-        // Krok 6: Dodatkowe statystyki
         assertTrue(employeeService.getAverageSalary().isPresent());
         assertTrue(employeeService.getTopEarner().isPresent());
         
-        // Krok 7: Sortowanie i grupowanie
         List<Employee> sorted = employeeService.getEmployeesSortedByLastName();
         assertEquals(employeeService.size(), sorted.size());
         
@@ -233,7 +205,6 @@ class IntegrationTest {
      */
     @Test
     void testDuplicateEmailHandling() throws IOException {
-        // Given
         Path csvFile = tempDir.resolve("duplicates.csv");
         String csvContent = """
                 firstName,lastName,email,company,position,salary
@@ -242,10 +213,8 @@ class IntegrationTest {
                 """;
         Files.writeString(csvFile, csvContent);
         
-        // When
         ImportSummary summary = importService.importFromCsv(csvFile.toString());
         
-        // Then - drugi email (case-insensitive) powinien być odrzucony
         assertEquals(1, summary.getImportedCount());
         assertEquals(1, summary.getErrors().size());
         assertTrue(summary.getErrors().get(0).toLowerCase().contains("istnieje"));
@@ -256,7 +225,6 @@ class IntegrationTest {
      */
     @Test
     void testEmptyAndEdgeCases() throws IOException {
-        // Test 1: Pusty plik (tylko nagłówek)
         Path emptyFile = tempDir.resolve("empty.csv");
         Files.writeString(emptyFile, "firstName,lastName,email,company,position,salary\n");
         
@@ -264,7 +232,6 @@ class IntegrationTest {
         assertEquals(0, emptySummary.getImportedCount());
         assertTrue(emptySummary.getErrors().isEmpty());
         
-        // Test 2: Plik z samymi pustymi liniami
         Path blankFile = tempDir.resolve("blank.csv");
         Files.writeString(blankFile, "firstName,lastName,email,company,position,salary\n\n\n\n");
         
@@ -272,7 +239,6 @@ class IntegrationTest {
         assertEquals(0, blankSummary.getImportedCount());
         assertTrue(blankSummary.getErrors().isEmpty());
         
-        // Test 3: Statystyki dla pustego serwisu
         Map<String, CompanyStatistics> emptyStats = employeeService.getCompanyStatistics();
         assertTrue(emptyStats.isEmpty());
         
@@ -319,19 +285,14 @@ class IntegrationTest {
         
         importService.importFromCsv(csvFile.toString());
         
-        // Test sortowania
         List<Employee> sorted = employeeService.getEmployeesSortedByLastName();
-        // Pierwsze dwa mają nazwisko Adamczyk (kolejność zależna od imienia)
         assertTrue(sorted.get(0).getLastName().equals("Adamczyk"));
         assertTrue(sorted.get(1).getLastName().equals("Adamczyk"));
-        // Ostatni ma nazwisko Zielińska
         assertEquals("Anna Zielińska", sorted.get(2).getFullName());
         
-        // Test filtrowania po firmie
         List<Employee> techCorpEmployees = employeeService.findByCompany("TechCorp");
         assertEquals(2, techCorpEmployees.size());
         
-        // Test grupowania po stanowisku
         var grouped = employeeService.groupByPosition();
         assertTrue(grouped.containsKey(com.techcorp.model.Position.PROGRAMISTA));
         assertTrue(grouped.containsKey(com.techcorp.model.Position.MANAGER));

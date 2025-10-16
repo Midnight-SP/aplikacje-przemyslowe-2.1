@@ -27,8 +27,7 @@ public class ApiService {
     }
     
     public List<Employee> fetchEmployeesFromApi(String apiUrl) throws ApiException {
-        try {
-            // Wykonanie zapytania GET do API
+    try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(apiUrl))
                     .GET()
@@ -37,12 +36,10 @@ public class ApiService {
             
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             
-            // Sprawdzenie statusu HTTP
             if (response.statusCode() != 200) {
                 throw new ApiException("Błąd HTTP: " + response.statusCode() + " - " + response.body());
             }
             
-            // Parsowanie odpowiedzi JSON
             return parseJsonResponse(response.body());
             
         } catch (IOException e) {
@@ -64,27 +61,21 @@ public class ApiService {
             for (JsonElement element : jsonArray) {
                 JsonObject userObject = element.getAsJsonObject();
                 
-                // Pobieranie pola name
                 String fullName = userObject.get("name").getAsString();
                 
-                // Rozdzielenie name na firstName i lastName
                 String[] nameParts = fullName.trim().split("\\s+", 2);
                 String firstName = nameParts[0];
                 String lastName = nameParts.length > 1 ? nameParts[1] : "";
                 String employeeFullName = firstName + (lastName.isEmpty() ? "" : " " + lastName);
                 
-                // Pobieranie pola email
                 String email = userObject.get("email").getAsString();
                 
-                // Pobieranie pola company.name
                 JsonObject companyObject = userObject.get("company").getAsJsonObject();
                 String companyName = companyObject.get("name").getAsString();
                 
-                // Przypisanie stanowiska PROGRAMISTA i bazowej stawki
                 Position position = Position.PROGRAMISTA;
                 double salary = position.getBaseSalary();
                 
-                // Utworzenie obiektu Employee
                 Employee employee = new Employee(employeeFullName, email, companyName, position, salary);
                 employees.add(employee);
             }
