@@ -59,27 +59,12 @@ public class EmployeeService {
         return employees.size();
     }
 
-    /**
-     * Zwraca listę pracowników z wynagrodzeniem niższym niż bazowa stawka ich stanowiska.
-     * Używa Stream API do filtrowania pracowników.
-     * 
-     * @return lista pracowników z niewystarczającym wynagrodzeniem
-     */
     public List<Employee> validateSalaryConsistency() {
         return stream()
                 .filter(employee -> employee.getSalary() < employee.getPosition().getBaseSalary())
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Zwraca mapę statystyk dla każdej firmy.
-     * Dla każdej firmy oblicza:
-     * - liczbę pracowników
-     * - średnie wynagrodzenie
-     * - pełne imię i nazwisko osoby z najwyższym wynagrodzeniem
-     * 
-     * @return mapa, gdzie kluczem jest nazwa firmy, a wartością obiekt CompanyStatistics
-     */
     public Map<String, CompanyStatistics> getCompanyStatistics() {
         return stream()
                 .collect(Collectors.groupingBy(
